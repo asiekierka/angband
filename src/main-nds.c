@@ -48,6 +48,26 @@
 #include "nds/nds-keyboard.h"
 #include "nds/nds-buttons.h"
 
+#define DEBUG_MEMORY_USAGE
+
+#ifdef DEBUG_MEMORY_USAGE
+
+#include <malloc.h>
+#include <unistd.h>
+
+/* https://devkitpro.org/viewtopic.php?f=6&t=3057 */
+
+extern uint8_t *fake_heap_end;
+extern uint8_t *fake_heap_start;
+
+static int nds_free_memory_bytes(void) {
+	struct mallinfo info = mallinfo();
+	return info.fordblks + (fake_heap_end - (uint8_t*)sbrk(0));
+}
+
+#endif
+
+
 /*
  * Extra data to associate with each "window"
  *
@@ -131,8 +151,14 @@ static void handle_touch(int x, int y, int button, bool press)
 
 void do_vblank()
 {
+#ifdef DEBUG_MEMORY_USAGE
+	char mem_usage_str[96];
+	snprintf(mem_usage_str, sizeof(mem_usage_str), "Free mem: %d bytes", nds_free_memory_bytes());
+	nds_draw_str(0, NDS_SCREEN_LINES * 2 - 1, mem_usage_str, NDS_WHITE_PIXEL);
+#endif
+
 	nds_video_vblank();
-	
+
 #ifdef _3DS
 	/* Handle home menu, poweroff, etc */
 	if (!aptMainLoop()) {
@@ -200,7 +226,7 @@ static void init_color_data(void)
 #else
 		color_data[i] = RGB15(angband_color_table[i][1] >> 3,
 		                      angband_color_table[i][2] >> 3,
-		                      angband_color_table[i][3] >> 3);
+		                      angband_color_table[i][3] >> 3) | 0x8000;
 #endif
 	}
 }

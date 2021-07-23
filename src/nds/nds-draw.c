@@ -81,11 +81,11 @@ void nds_draw_pixel(u16b x, u16b y, nds_pixel data) {
 #ifdef _3DS
 	fb[x * NDS_SCREEN_HEIGHT + (NDS_SCREEN_HEIGHT - y - 1)] = data;
 #else
-	fb[y * NDS_SCREEN_WIDTH + x] = data | BIT(15);
+	fb[y * NDS_SCREEN_WIDTH + x] = data;
 #endif
 }
 
-void nds_draw_char_px(int x, int y, char c, nds_pixel clr)
+void nds_draw_char_px(u16b x, u16b y, char c, nds_pixel clr)
 {
 	nds_pixel *fb = nds_get_framebuffer(&y);
 
@@ -96,9 +96,22 @@ void nds_draw_char_px(int x, int y, char c, nds_pixel clr)
 #endif
 }
 
+void nds_draw_str_px(u16b x, u16b y, const char *str, nds_pixel clr)
+{
+	while (*str != '\0') {
+		nds_draw_char_px(x, y, *(str++), clr);
+		x += nds_font->width;
+	}
+}
+
 void nds_draw_char(byte x, byte y, char c, nds_pixel clr)
 {
 	nds_draw_char_px(x * nds_font->width, y * nds_font->height, c, clr);
+}
+
+void nds_draw_str(byte x, byte y, const char *str, nds_pixel clr)
+{
+	nds_draw_str_px(x * nds_font->width, y * nds_font->height, str, clr);
 }
 
 void nds_draw_cursor(int x, int y) {
